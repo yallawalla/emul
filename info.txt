@@ -1,0 +1,205 @@
+fil onoff.ws
+col t=20
+col 0,1,3,4=180,180,50
+col 2,5=0,255,50
+col 0,1,3,4,+r
+col 2,+r
+col 5,+l
+wait 1000
+col 2,-r
+col 5,-l
+
+fil standby.ws
+col 0,3=180,180,50
+col 0,3,+l
+col 2,-l
+col 5,-r
+
+fil ready.ws
+col 2,5=0,255,50
+col 2,+l
+col 5,+r
+
+fil error.ws
+col 0,3=1,255,50
+col 0,3,+l
+col 2,-l
+col 5,-r
+
+fil active.ws
+col 2,5,-l
+wait 100
+col 2,5,+l
+
+---------------------------------------------------------------------------------------
+STM32Cube FW_F4 V1.25.0, CubeMx 6.0.1
+
+/v 0.21 Sep  4 2018 <5005D271>
+
+- DL protocol implementiran
+- DL lowpass 1-10ms, state vars reset of prehodu stanj
+- DL polling interval 10ms, IOC 50ms - SYS/DL prepocasna ob izklopu ???
+	Najboljse, da skrajsamo na 100ms
+- max moc 6W, ni preizkušeno na 2kHz pulse mode
+- offset cca 5, kratka spica na vklopu, plese za cca 20-30 counts, odvisno of moci.
+	Zaenkrat je nastavljen na 100 
+	
+/v 0.21 Sep  7 2018 <241ACE63>
+- akt. timerska vhoda s pulldown na diode sense zaradi motenj samo z erbijem
+
+	TODO:
+	- razširitev diagnostike
+	- smafu okrog konzole
+	- premostitev okvarjenega energometra
+	- boost mode, 
+	- problem detekcije diode, motnje na senz. linijah
+	- kapitalna: AutoRetransmission = ENABLE, tudi v bootloaderju :(
+	- manjka diagnostika za fuc T senzor
+	
+/v 0.21 Sep 14 2018 <3DFB1E34>
+
+	- izvedba idEM_ack v can.cpp, zaradi možnosti err. maske; sistem vedno 
+	  pošlje IOC_FootAck
+	- Align() v spray.cpp; aktivacija z __Delete plus dodatna potrditev
+	- v vseh novih podsestavih in M321-8
+	
+	- manjka input za flow senzor, zaenkrat deluje tudi stari konektor na FAN2
+	- fan2 ???
+	- nastavitev za SYS_SHG ob resetu je on ( v CubeMX !!! )
+
+/v 0.22 Nov  7 2018 <6232A467>
+	- offset za diodo ob vklopu
+	- 500 ms delay za polling
+	
+- v 0.24 Nov 23 2018 <B3168E65>
+- AVG filter na 2kHz, oba IIR filtra na frekv. callbacka- 
+- IOC objekt ne deduje vec ADC
+
+/v 0.24 Dec  6 2018 <3CF656A1>
+- calibrate režim ta DL izklopi preverjanje omejitev in timinga
+- dodatek v 0x21f message: byte mode, oznacuje aktivni kanal,
+	drug kanal se smatra za crosstalk in se preverja samo zgornja meja
+- sprememba na DL timeout; prepreci error pri hitrem ponovnem pritisu FSW 
+- konzola za DL, F4
+
+V 0.24 Dec  7 2018 <163DF537>
+- bug pri sprejemu zahteve za _CALIBRATE; dvakrat je izklopil E18, ne pa tudi E19
+
+V 0.24 Dec  7 2018 <DCF3073D>
+- bug pri izpisu temp. na pumpi
+- v konzoli se readyTimeout sproži samo ob spremembu in ne kont. ob refreshu
+- spray se ugasne v ERROR stanju (proc. SetState)
+
+V 0.27 Dec 21 2018 <CFFB0DFD>
+- jeba v poll error: can message je šel ven preden se je zamenjalo stanje
+
+V 0.28 Jan 21 2019 <547C4E38>
+- bug v nastavitvi za crowbar override, napacen enum
+	test <200 00 08 mora izklopiti error
+- izklop pumpe ni delal, ce je ioc že v error state 
+
+V 0.29 Jan 30 2019 <6ED63AD6>
+- bug pri sinhronizaciji ref. signala pri dvokanalni diodi; sinhronizacija na 
+  trenutno aktivni kanal, dolocen v CAN 0x21F msg (limite)
+- v konzoli odstranjena možnost vklopa vseh err. hkrati   +E<enter>. Možnost izklopa ostaja.
+- v konzoli dodana možnost izklopa debug. -D<enter>
+
+- STM32CubeMX Version 5.0.1
+- STM32Cube FW_F4 V1.23.0
+
+v 1.00 Aug 27 2019 <CFF31952>
+- hitrejši vklop pumpe (ms ni vec deljena)
+- blowjob mode, aktiviran s voda/zrak ff/ff (!sic)
+
+v 1.01 Oct  1 2019 <4931597B>
+- error state ne sprazni flaše
+- pump_drive se lahko spreminja samo ce razlicen od 0; 
+	indikator za Enabled/Disabled !!!
+
+v 1.01 Oct  2 2019 <04280388>
+- air & bottle offset izmerjena po 'y' v spray setup
+
+v 1.01 Oct 10 2019 <F6548C22>
+- zmanjšan gain.bottle
+- CtrlUp, CtrlDown spreminjata gain.bottle v inkrementih po 500
+
+v 1.01 Oct 14 2019 <B53639EC>
+- CAN2COM message dobi funkcionalnost __CtrlE na footswitch portu
+- prvi msg naredi bridge, msg brez payloada ga ugasne
+
+
+ty ioc.ini
+
+   20,   50,   30,   40,59424,   34,  7 /.. pump
+   20,   95,   30,   40,    7           /.. fan
+16384,15142,16384,15344                 /.. offset
+16384, 8192,16384,24576                 /.. gain
+22742,-3917, 3574                       /.. pressure fit coeff.
+color 0=180,180,50
+color 1=180,180,50
+color 2=0,255,50
+color 3=180,180,50
+color 4=180,180,50
+color 5=0,255,50
+00002008,00002008                       /.. error, warning mask
+
+V 1.01 Feb 27 2020 <91556DEB>
+- pump delay podaljšan na 6 sek zaradi zamenjave vrstnega reda
+filter <> flow senzor, ki zakasni polnenje :///
+
+
+V 1.03 Jun 22 2020 <8534EB6C>
+
+1) diode engmeter selftest, CAN messages modified:
+
+- testiranje DL signalov se izvede 200 ms po restartu
+- rezultat je enabled / disabled, disabled pomeni da dioda ni zaznana, kar lahko primerjaš na SYS s svojim pinganjem DL
+- rezultat dobi sys z novim ukazom 0x205, odgovor je 0x245 in dodatni byte 0x00 (disabled) ali 0x01 (enabled)
+- ce vsebuje 0x205 dodatni byte 0x01, to pomeni zahtevo za ponovno testiranje (predvidoma samo v  STANDBY !!!... ne morem testirat brez HW) odgovor dobiš v cca 200ms, v tem casu IOC ne odgovarja na CAN.
+- vkolikor test ugotovi neveljaven odziv (konstanten nivo samo na eni ali  drugi liniji), vrže ven z error 18 ali 19
+
+2) FAN boost added
+3) 60 deg. thermal shutdown
+4) povecana histereza za detekcijo vhodnega tlaka, 2/3 bar 
+5) DL polling timeout poveèan na 200ms
+
+V 1.04 Jul  2 2020 <C57EC859>
+- spr. diodni energ. aktivno stanje definirano z EMIT(od SYS) plus diode.mode(od DL) :/
+
+
+V 1.06 Sep 15 2020 <0271DCD0>, HW V2
+
+- STM32Cube FW_F4 V1.25.0, CubeMX 6.0.1
+- pump.Disable() se premakne iz pump::Status to IOC::Set>State
+  razlog: na prejšnjem mestu ni bilo mogoce maskirati zaustavitve pumpe ampak zgolj error stanje oz. izpis
+- uvedena. max. vrednost za Ipump v int. 100ms; predhodno odbiranje na 100ms je preskakovala pulzirajoce max. pri zaprtem vofokrogu  
+- preizkušena distrib. fsw
+
+
+- pri +/-50  general. offset error ga 1064 nm preseže pri 4W
+- CW ne deluje, treba obravnavati loceno
+
+V 1.06 Feb  9 2021 <98E6F21D>, HW V1
+- popravki default vrednosti v konstruktorju _IOC in _SPRAY zaradi možnosti brisanja ioc.ini, premenjenega obsega spraya 
+  in spremenjene maske
+- popravki tandem (CW)
+- sprememba max. vrednost pritiska v zraèni liniji je +1Bar
+- float switch, kodiranje plate in izpis verzije HW
+- odpravljeni bugi zaradi vtikanja/iztikanja footswitcha
+
+I-10611, S-2024
+I-10397, S-1975
+I-10295, S-1949
+
+25.8.21
+
+v 1.08 Aug 25 2021 <9AB7E286>
+I-11458, S-2210
+
+- bug v pump.cpp
+- pump.Enable() aktivira pump & float errors delay; posledicno pump.Status() preskakuje diagnostiko
+- zaradi tega pump.Status() vraca predhodne error pumpe (inic. je v kretnici, sicer dobiš poplavo msg), ki takoj preklicejo prehod v _STANDBY in 
+  ponovno ugasnejo pumpo.
+- rešitev: v pump.Enable() dodaš inic. lokalne err spremenljivke v pump objektu.
+
+
