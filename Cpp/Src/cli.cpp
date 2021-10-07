@@ -30,11 +30,6 @@ int _CLI::Fkey(int t) {
 				Newline();
 			} 
 			break;
-			case __f2:
-			case __F2:
-				void test(_CLI *);
-				test(this);
-				return __F12;
 			case __f4:
 			case __F4:
 				ioc->diode.Newline();
@@ -83,6 +78,10 @@ int _CLI::Fkey(int t) {
 			case __F11:
 				ioc->SaveSettings();
 			break;
+			case __CtrlT:
+				void test(_CLI *);
+				test(this);
+				return __F12;
 
 			default:
 				return t;
